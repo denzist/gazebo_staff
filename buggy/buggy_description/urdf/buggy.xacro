@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="buggy">
+	<property name="PI" value="3.1415926535897931" />
+	<xacro:include filename="$(find buggy_description)/urdf/buggy_model.xacro"/>
+	<xacro:include filename="$(find tilting_unit_description)/urdf/tilting_unit.xacro"/>
+
+	<joint name="tilt_base_link_base_link_joint" type="fixed">
+		<parent link="base_link"/>
+		<child link="tilt_base_link"/>
+		<origin rpy="0 0 0" xyz="0 0 ${base_hight/2 + tilt_base_hight/2}"/>
+	</joint>
+
+	<gazebo>
+		<plugin name="tilting_unit_controller" filename="libtilting_unit_gazebo_plugin.so">
+			<joint_states_topic_name>joint_states</joint_states_topic_name>
+			<tilting_unit_joint>rot_elem_joint</tilting_unit_joint>
+      		<theta_max>${PI/2}</theta_max>
+      		<theta_min>${PI/2}</theta_min>
+			<period>2.0</period>
+		</plugin>
+	</gazebo>
+	
+</robot>

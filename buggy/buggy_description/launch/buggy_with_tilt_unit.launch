@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<param name="robot_description"
+		command="$(find xacro)/xacro.py '$(find buggy_description)/urdf/buggy_with_tilt_unit.xacro'" />
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find buggy_description)/launch/model.rviz"/>
+	
+</launch>
