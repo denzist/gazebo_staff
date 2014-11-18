@@ -12,7 +12,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <tf/transform_broadcaster.h>
-#include <velocity_tracking_controller/ControlVector.h> 
+#include <control_msgs/ControlVector.h> 
 
 namespace gazebo
 {   
@@ -23,19 +23,16 @@ namespace gazebo
     ~DiffDrivePlugin();
     void Load(physics::ModelPtr parent, sdf::ElementPtr sdf);
     void OnUpdate();
-    void callbackCmdVel(const velocity_tracking_controller::ControlVector &msg);
-    void publishGroundTruth();
+    void callbackControl(const control_msgs::ControlVector &msg);
     void publishJointStates();
     void parseSDF(sdf::ElementPtr sdf);
   private:
     event::ConnectionPtr update_connection_; // Pointer to the update event connection
     ros::NodeHandle* node_;  // ROS Nodehandle
     ros::Publisher joint_state_pub_; // ROS Subscribers and Publishers
-    ros::Subscriber cmd_vel_sub_;
-    ros::Publisher ground_truth_pose_pub_;
-    ros::Publisher control_vector_pub_;
+    ros::Subscriber control_sub_;
     //r_ - robot 
-    std::string cmd_vel_topic_; // topic names
+    std::string control_topic_; // topic names
     std::string odom_topic_; 
     std::string joint_states_topic_;
 

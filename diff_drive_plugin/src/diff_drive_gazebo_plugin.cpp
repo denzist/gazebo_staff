@@ -20,13 +20,13 @@ namespace gazebo
     }
 
     void DiffDrivePlugin::parseSDF(sdf::ElementPtr sdf){
-    	cmd_vel_topic_ = sdf->Get<std::string>("cmd_vel_topic_name");
-    	if(cmd_vel_topic_ == "")
-    		cmd_vel_topic_ = "cmd_vel";
-    	odom_topic_ = sdf->Get<std::string>("odom_topic_name");
+    	control_topic_ = sdf->Get<std::string>("control");
+    	if(control_topic_ == "")
+    		control_topic_ = "/control_vector";
+    	odom_topic_ = sdf->Get<std::string>("odom");
     	if(odom_topic_ == "")
     	   	odom_topic_ = "odom";
-    	joint_states_topic_ = sdf->Get<std::string>("joint_states_topic_name"); 
+    	joint_states_topic_ = sdf->Get<std::string>("joint_states"); 
     	if(joint_states_topic_ == "")
     		joint_states_topic_= "joint_states";
     	//parse joints
@@ -89,27 +89,13 @@ namespace gazebo
     		if (r_joints_[i] == NULL)
     			gzthrow("The controller couldn't get joint " << r_joint_states_.name[i]);
     	}
-    	/*prv_update_t_  = prv_print_t_  = world_->GetSimTime();
-    	r_x_ = 0.0;
-    	r_y_ = 0.0;
-    	r_th_ = 0.0;
-    	r_vx_ = 0.0;
-    	r_vy_ = 0.0;
-    	r_vth_ = 0.0;
-		  */
     	node_ = new ros::NodeHandle("~");
-    	cmd_vel_sub_ = node_->subscribe("/gazebo/control_vector", 10,	&DiffDrivePlugin::callbackCmdVel, this);
-    	ground_truth_pose_pub_ = node_->advertise<nav_msgs::Odometry>("base_pose_ground_truth", 1);
+    	control_sub_ = node_->subscribe(control_topic_, 10,	&DiffDrivePlugin::callbackControl, this);
     	joint_state_pub_ = node_->advertise<sensor_msgs::JointState>(joint_states_topic_, 1);
-      //publish control vector
-      //TODO implement as parameter
-
     	base_link_ = model_->GetLink("base_link");
     	if (base_link_ == NULL)
     		gzthrow("The controller couldn't get base_link " << base_link_);
     	ROS_INFO("gazebo_ros_control plugin initialized");
-	    // Listen to the update event. This event is broadcast every
-	    // simulation iteration.
     	update_connection_ = event::Events::ConnectWorldUpdateBegin(
     		boost::bind(&DiffDrivePlugin::OnUpdate, this));
     }
@@ -119,49 +105,15 @@ namespace gazebo
     {
       ros::spinOnce();
       publishJointStates();
-      publishGroundTruth();
     }
 
-    void DiffDrivePlugin::callbackCmdVel(const velocity_tracking_controller::ControlVector &msg)
+    void DiffDrivePlugin::callbackControl(const control_msgs::ControlVector &msg)
     {
-    	std::vector<double> control = msg.control;
-      for (int i = 0; i < r_num_joints_; i++)
-       	r_joints_[i]->SetMaxForce(0, r_w_torq_);
-      for (int i = 0; i < r_num_joints_; i++)
-      	r_joints_[i]->SetVelocity(0, control[i]);
-    }
-
-    void DiffDrivePlugin::publishGroundTruth()
-    {
-
-      nav_msgs::Odometry odom;
-      ros::Time current_time = ros::Time::now();
-      odom.header.stamp = current_time;
-      odom.header.frame_id = "odom";
-      odom.child_frame_id = "base_link";
-
-      math::Pose base_link_pose = base_link_->GetWorldPose();
-      odom.pose.pose.position.x = base_link_pose.pos.x;
-      odom.pose.pose.position.y = base_link_pose.pos.y;
-      odom.pose.pose.position.z = base_link_pose.pos.z;
-      odom.pose.pose.orientation.x = base_link_pose.rot.x;
-      odom.pose.pose.orientation.y = base_link_pose.rot.y;
-      odom.pose.pose.orientation.z = base_link_pose.rot.z;
-      odom.pose.pose.orientation.w = base_link_pose.rot.w;
-      for(int i = 0; i < 6; i++)
-        odom.pose.covariance[i*6+i] = 0.1;
-
-      math::Vector3 linear_vel = base_link_->GetWorldLinearVel(); 
-      math::Vector3 angular_vel = base_link_->GetWorldAngularVel(); 
-      odom.twist.twist.linear.x = sqrt(linear_vel.x * linear_vel.x + linear_vel.y*linear_vel.y); 
-      odom.twist.twist.linear.y = 0.0;
-      odom.twist.twist.linear.z = linear_vel.z;
-      odom.twist.twist.angular.x = angular_vel.x;
-      odom.twist.twist.angular.y = angular_vel.y;
-      odom.twist.twist.angular.z = angular_vel.z;
-      //ROS_INFO_STREAM("linear speed " << sqrt(linear_vel.x * linear_vel.x + linear_vel.y*linear_vel.y)); 
-      //ROS_INFO_STREAM("ang speed " << angular_vel.z);
-      this->ground_truth_pose_pub_.publish(odom);
+        std::vector<double> control = msg.control;
+        for (int i = 0; i < r_num_joints_; i++)
+       	    r_joints_[i]->SetMaxForce(0, r_w_torq_);
+        for (int i = 0; i < r_num_joints_; i++)
+        	r_joints_[i]->SetVelocity(0, control[i]);
     }
 
     void DiffDrivePlugin::publishJointStates()

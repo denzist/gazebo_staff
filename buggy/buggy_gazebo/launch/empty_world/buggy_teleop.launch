@@ -11,7 +11,7 @@
 
   <include file="$(find robot_odom)/launch/robot_comb_odom.launch"/>
 
-  <include file="$(find robot_teleop)/launch/joy_teleop.launch"/>
+  <include file="$(find buggy_gazebo)/launch/joy_teleop.launch"/>
 
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" >
      <remap from="joint_states" to="/gazebo/joint_states" />
