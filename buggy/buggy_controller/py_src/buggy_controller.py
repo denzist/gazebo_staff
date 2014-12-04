@@ -15,9 +15,9 @@ class Controller(object):
     self.cmd_vel_topic = cmd_vel_topic
     self.control_topic = control_topic
     self.node_name = node_name
-    self.enhancing_matrix = np.identity(2)
-    self.kinematic_matrix = np.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, 1.0, 1.0]])
-    self.enhancing_matrix = np.array([[10.0, 0.0], [0.0, 3.16]])
+    self.model = np.transpose(np.array([[1./ 40., 1./ 40., 1./ 40., 1./ 40.] ,
+     [-1./(4.*3.16), -1./(4.*3.16), 1./(4.*3.16), 1./(4.*3.16)]]))
+    #self.model = np.transpose(np.array([[1./ 4., 1./ 4., 1./ 4., 1./ 4.] , [-1./(4.), -1./(4.), 1./(4.), 1./(4.)]]))
 
 
   def control(self):
@@ -28,16 +28,20 @@ class Controller(object):
         self.control_topic = rospy.get_param('~control')
 
     self.publisher = rospy.Publisher(self.control_topic, ControlVector, queue_size=10)
+    self.subscriber = rospy.Subscriber(self.cmd_vel_topic, Twist, self.update)
     while not rospy.is_shutdown():
-      vel = self.vel_to_list(rospy.wait_for_message(self.cmd_vel_topic, Twist))
-      vel = [vel[0], vel[5]]
-      enh_vel = np.dot(np.array(vel), self.enhancing_matrix).tolist()
-      control = np.dot(enh_vel, self.kinematic_matrix).tolist()
-      msg = ControlVector()
-      msg.header.stamp = rospy.get_rostime()
-      msg.length = len(control)
-      msg.control = control
-      self.publisher.publish(msg)
+      rospy.spin()
+
+  def update(self, v):
+    vel =  self.vel_to_list(v)
+    b = [vel[0], vel[5]]
+    a = np.transpose(self.model)
+    u = np.linalg.lstsq(a, b)[0].tolist()
+    msg = ControlVector()
+    msg.header.stamp = rospy.get_rostime()
+    msg.length = len(u)
+    msg.control = u
+    self.publisher.publish(msg)
 
   def vel_to_list(self, vel):
     return [vel.linear.x, vel.linear.y, vel.linear.z,
