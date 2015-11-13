@@ -10,6 +10,7 @@
 #include <gazebo/physics/physics.hh>
 #include <sensor_msgs/JointState.h>
 #include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 
 namespace gazebo
 {   
@@ -25,6 +26,7 @@ namespace gazebo
     event::ConnectionPtr update_connection_; // Pointer to the update event connection
     ros::NodeHandle* node_;  // ROS Nodehandle
     ros::Publisher ground_truth_pose_pub_;
+    tf::TransformBroadcaster tf_br_;
     double rate_;
     //r_ - robot 
     std::string ground_truth_pose_;
@@ -33,6 +35,7 @@ namespace gazebo
     physics::LinkPtr base_link_;
     ros::Time time_;
     bool pub_flag_;
+    bool tf_flag_;
   };
 
   // Register this plugin with the simulator

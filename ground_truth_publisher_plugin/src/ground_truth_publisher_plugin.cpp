@@ -34,12 +34,11 @@ namespace gazebo
     	}
       ground_truth_pose_ = sdf->Get<std::string>("ground_truth_topic");
       if(ground_truth_pose_ == "")
-          ground_truth_pose_ = "/ground_truth_pose";
+          ground_truth_pose_ = "ground_truth_pose";
       pub_flag_ = sdf->Get<bool>("pubish_flag");
-      if(pub_flag_ == *(new bool()))
-          pub_flag_ = true;  
+      tf_flag_ = sdf->Get<bool>("tf_flag");
       rate_ = sdf->Get<double>("rate");
-      if(rate_ == *(new double()))
+      if(rate_ == double())
           rate_ = 50;
     	node_ = new ros::NodeHandle("~");
       if(pub_flag_)
@@ -66,7 +65,11 @@ namespace gazebo
 
     void GroundTruthPublisher::publishGroundTruth()
     {
-
+      if(!pub_flag_)
+      {
+        return;
+      }
+        
       nav_msgs::Odometry odom;
       ros::Time current_time = ros::Time::now();
       odom.header.stamp = current_time;
@@ -92,7 +95,23 @@ namespace gazebo
       odom.twist.twist.angular.x = angular_vel.x;
       odom.twist.twist.angular.y = angular_vel.y;
       odom.twist.twist.angular.z = angular_vel.z;
-      if(pub_flag_)
-        ground_truth_pose_pub_.publish(odom);
+      ground_truth_pose_pub_.publish(odom);
+
+      if(!tf_flag_)
+      {
+        return;
+      }
+      geometry_msgs::TransformStamped tf_msg;
+      tf_msg.header.stamp = current_time;
+      tf_msg.header.frame_id = "ground_truth_pose";
+      tf_msg.child_frame_id = "base_link";
+      tf_msg.transform.translation.x = odom.pose.pose.position.x;
+      tf_msg.transform.translation.y = odom.pose.pose.position.y;
+      tf_msg.transform.translation.z = odom.pose.pose.position.z;
+      tf_msg.transform.rotation.x = odom.pose.pose.orientation.x;
+      tf_msg.transform.rotation.y = odom.pose.pose.orientation.y;
+      tf_msg.transform.rotation.z = odom.pose.pose.orientation.z;
+      tf_msg.transform.rotation.w = odom.pose.pose.orientation.w;
+      tf_br_.sendTransform(tf_msg);
     }
 }

@@ -171,7 +171,8 @@
 		<plugin name="ground_truth_publisher" filename="libground_truth_publisher_plugin.so">
 			<ground_truth_topic>/gazebo/ground_truth_pose</ground_truth_topic>
 			<rate>30</rate>
-			<pubish_flag>true</pubish_flag>
+			<pubish_flag>1</pubish_flag>
+			<tf_flag>1</tf_flag>
 		</plugin>
 	</gazebo>
 

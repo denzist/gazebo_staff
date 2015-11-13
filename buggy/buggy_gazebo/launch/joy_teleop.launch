@@ -3,13 +3,15 @@
  <!-- joy node -->
   <node respawn="true" pkg="joy"
         type="joy_node" name="joy" >
-    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="dev" type="string" value="/dev/input/js1" />
     <param name="autorepeat_rate" value="30.0" />
   </node>
 
   <node pkg="joy_teleop" type="joy_teleop" name="joy_teleop" output="screen">
-  	<param name="max_lin_vel" type="double" value="2.0" />
-  	<param name="max_ang_vel" type="double" value="1.0" />
+  	<param name="max_lin_vel" type="double" value="5.0" />
+  	<param name="max_ang_vel" type="double" value="5.0" />
+    <param name="init_lin_vel" type="double" value="1.5" />
+    <param name="init_ang_vel" type="double" value="2.0" />
   	<param name="cmd_topic" value="/gazebo/cmd_vel"/>
     <param name="rate" value="30.0"/>
   </node>
